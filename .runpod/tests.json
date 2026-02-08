@@ -9,7 +9,11 @@
         "max_tokens": 20,
         "temperature": 0.1
       },
-      "timeout": 60000
+      "timeout": 300000
     }
-  ]
+  ],
+  "config": {
+    "gpuTypeId": "NVIDIA GeForce RTX 3090",
+    "gpuCount": 1
+  }
 }
