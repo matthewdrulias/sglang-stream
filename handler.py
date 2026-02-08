@@ -107,10 +107,9 @@ def handler(event):
         return {"error": str(e)}
 
 
-# Start server on cold start
-if __name__ == "__main__":
-    if start_sglang_server():
-        runpod.serverless.start({"handler": handler})
-    else:
-        print("Failed to start SGLang server")
-        exit(1)
+# Start server on cold start and run handler
+if not start_sglang_server():
+    print("Failed to start SGLang server")
+    exit(1)
+
+runpod.serverless.start({"handler": handler})
