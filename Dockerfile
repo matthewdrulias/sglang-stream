@@ -20,4 +20,4 @@ ENV SINK_TOKEN_COUNT="4"
 ENV CONTEXT_LENGTH="32768"
 ENV HF_HOME="/runpod-volume/huggingface"
 
-CMD ["python", "/app/handler.py"]
+CMD ["python3", "/app/handler.py"]
