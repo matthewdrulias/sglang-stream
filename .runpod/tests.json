@@ -1,0 +1,15 @@
+{
+  "tests": [
+    {
+      "name": "basic_generation",
+      "input": {
+        "messages": [
+          {"role": "user", "content": "Say hello in exactly 3 words."}
+        ],
+        "max_tokens": 20,
+        "temperature": 0.1
+      },
+      "timeout": 60000
+    }
+  ]
+}

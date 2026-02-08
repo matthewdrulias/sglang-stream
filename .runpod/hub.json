@@ -1,0 +1,78 @@
+{
+  "title": "SGLang StreamingLLM",
+  "description": "SGLang with StreamingLLM support for infinite context generation. Includes attention sink protection and RoPE position remapping.",
+  "type": "serverless",
+  "category": "language",
+  "config": {
+    "runsOn": "GPU",
+    "containerDiskInGb": 100,
+    "volumeDiskInGb": 200,
+    "presets": [
+      {
+        "name": "Qwen3-8B (1x GPU)",
+        "defaults": {
+          "MODEL_PATH": "Qwen/Qwen3-8B",
+          "TP_SIZE": "1",
+          "QUANTIZATION": "",
+          "SINK_TOKEN_COUNT": "4"
+        }
+      },
+      {
+        "name": "Qwen3-235B-A22B FP8 (4x H100)",
+        "defaults": {
+          "MODEL_PATH": "Qwen/Qwen3-235B-A22B",
+          "TP_SIZE": "4",
+          "QUANTIZATION": "fp8",
+          "SINK_TOKEN_COUNT": "4"
+        }
+      }
+    ],
+    "env": [
+      {
+        "key": "MODEL_PATH",
+        "input": {
+          "name": "Model Path",
+          "type": "string",
+          "description": "HuggingFace model path or local path",
+          "default": "Qwen/Qwen3-8B"
+        }
+      },
+      {
+        "key": "TP_SIZE",
+        "input": {
+          "name": "Tensor Parallel Size",
+          "type": "string",
+          "description": "Number of GPUs for tensor parallelism",
+          "default": "1"
+        }
+      },
+      {
+        "key": "QUANTIZATION",
+        "input": {
+          "name": "Quantization",
+          "type": "string",
+          "description": "Quantization method (fp8, awq, or empty for none)",
+          "default": ""
+        }
+      },
+      {
+        "key": "SINK_TOKEN_COUNT",
+        "input": {
+          "name": "Sink Token Count",
+          "type": "string",
+          "description": "Number of sink tokens for StreamingLLM (0 to disable)",
+          "default": "4"
+        }
+      },
+      {
+        "key": "CONTEXT_LENGTH",
+        "input": {
+          "name": "Context Length",
+          "type": "string",
+          "description": "Maximum context length",
+          "default": "32768"
+        }
+      }
+    ]
+  }
+}
