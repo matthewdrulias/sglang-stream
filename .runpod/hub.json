@@ -3,6 +3,7 @@
   "description": "SGLang with StreamingLLM support for infinite context generation. Includes attention sink protection and RoPE position remapping.",
   "type": "serverless",
   "category": "language",
+  "handler": "src/handler.py",
   "config": {
     "runsOn": "GPU",
     "containerDiskInGb": 100,
