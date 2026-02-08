@@ -20,6 +20,7 @@ class CacheInitParams:
     is_eagle: bool = False
     tp_cache_group: Optional[torch.distributed.ProcessGroup] = None
     eviction_policy: str = "lru"
+    sink_token_count: int = 0  # StreamingLLM: protect first N tokens from eviction
     disable_finished_insert: bool = False
 
     enable_metrics: bool = False

@@ -375,6 +375,10 @@ class ForwardBatch(ForwardBatchDeepSeekMHAMixin):
     # For hidden states before normal
     return_hidden_states_before_norm: bool = False
 
+    # StreamingLLM position remapping
+    sink_token_count: int = 0
+    evicted_token_count: int = 0
+
     @classmethod
     def init_new(
         cls,
@@ -419,6 +423,9 @@ class ForwardBatch(ForwardBatchDeepSeekMHAMixin):
             tbo_split_seq_index=batch.tbo_split_seq_index,
             dimensions=batch.dimensions,
             return_hidden_states_before_norm=batch.return_hidden_states_before_norm,
+            # StreamingLLM
+            sink_token_count=batch.sink_token_count,
+            evicted_token_count=batch.evicted_token_count,
         )
         device = model_runner.device
 
@@ -506,6 +513,12 @@ class ForwardBatch(ForwardBatchDeepSeekMHAMixin):
             ret.extend_prefix_lens_cpu = batch.extend_prefix_lens
             ret.extend_seq_lens_cpu = batch.extend_seq_lens
             ret.extend_logprob_start_lens_cpu = batch.extend_logprob_start_lens
+
+        # StreamingLLM: apply position offset for infinite context
+        if ret.sink_token_count > 0 and ret.evicted_token_count > 0:
+            ret.positions = apply_streaming_llm_offset(
+                ret.positions, ret.sink_token_count, ret.evicted_token_count
+            )
 
         if model_runner.model_is_mrope:
             if (
@@ -1093,3 +1106,36 @@ def compute_position_torch(
 @torch.compile(dynamic=True, backend=get_compiler_backend(), disable=_is_npu)
 def clamp_position(seq_lens):
     return torch.clamp((seq_lens - 1), min=0).to(torch.int64)
+
+
+def apply_streaming_llm_offset(
+    positions: torch.Tensor,
+    sink_token_count: int,
+    evicted_token_count: int,
+) -> torch.Tensor:
+    """Apply StreamingLLM position remapping.
+
+    For infinite context streaming, positions must be remapped so that:
+    - Sink tokens (first N) keep their original positions [0, N-1]
+    - Window tokens are shifted to be contiguous with sink tokens
+
+    Args:
+        positions: Original position tensor
+        sink_token_count: Number of sink tokens to protect
+        evicted_token_count: Total tokens evicted from cache
+
+    Returns:
+        Remapped positions with window tokens shifted by -evicted_token_count
+    """
+    if sink_token_count <= 0 or evicted_token_count <= 0:
+        return positions
+
+    # Clone to avoid modifying original
+    positions = positions.clone()
+
+    # Window tokens (position >= sink_count) get shifted back by evicted count
+    # This makes them contiguous with sink tokens in RoPE space
+    mask = positions >= sink_token_count
+    positions[mask] -= evicted_token_count
+
+    return positions

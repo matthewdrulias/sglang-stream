@@ -2291,6 +2291,9 @@ class ScheduleBatch(ScheduleBatchDisaggregationDecodeMixin):
             mamba_track_indices=self.mamba_track_indices,
             mamba_track_mask=self.mamba_track_mask,
             mamba_track_seqlens=self.mamba_track_seqlens,
+            # StreamingLLM position remapping
+            sink_token_count=getattr(self.tree_cache, "sink_token_count", 0),
+            evicted_token_count=getattr(self.tree_cache, "evicted_token_count", 0),
         )
 
     def copy(self):
@@ -2477,3 +2480,7 @@ class ModelWorkerBatch:
     mamba_track_indices: Optional[torch.Tensor] = None  # shape: [b], int64
     mamba_track_mask: Optional[torch.Tensor] = None  # shape: [b], bool
     mamba_track_seqlens: Optional[torch.Tensor] = None  # shape: [b], int64
+
+    # StreamingLLM position remapping
+    sink_token_count: int = 0
+    evicted_token_count: int = 0

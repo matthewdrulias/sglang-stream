@@ -56,6 +56,7 @@ from sglang.srt.mem_cache.evict_policy import (
     LRUStrategy,
     MRUStrategy,
     PriorityStrategy,
+    SinkProtectedLRUStrategy,
 )
 from sglang.srt.mem_cache.hicache_storage import get_hash_str, hash_str_to_int64
 
@@ -116,6 +117,8 @@ class TreeNode:
         self.hash_value: Optional[List[str]] = None
         # priority for priority-aware eviction
         self.priority = priority
+        # StreamingLLM: offset from start of sequence (for sink token protection)
+        self.seq_start_offset: int = 0
 
         self.id = TreeNode.counter if id is None else id
         TreeNode.counter += 1
@@ -267,6 +270,8 @@ class RadixCache(BasePrefixCache):
         self.is_eagle = params.is_eagle
         self.disable_finished_insert = params.disable_finished_insert
         self.eviction_policy = params.eviction_policy.lower()
+        self.sink_token_count = params.sink_token_count  # StreamingLLM
+        self.evicted_token_count = 0  # StreamingLLM: total tokens evicted for position remapping
 
         self.kv_event_queue = []
 
@@ -285,7 +290,12 @@ class RadixCache(BasePrefixCache):
             self.key_match_fn = partial(_key_match_paged, page_size=self.page_size)
             self.get_child_key_fn = partial(get_child_key, page_size=self.page_size)
 
-        if self.eviction_policy == "lru":
+        # StreamingLLM: use sink-protected strategy when sink_token_count > 0
+        if self.sink_token_count > 0:
+            self.eviction_strategy: EvictionStrategy = SinkProtectedLRUStrategy(
+                sink_token_count=self.sink_token_count
+            )
+        elif self.eviction_policy == "lru":
             self.eviction_strategy: EvictionStrategy = LRUStrategy()
         elif self.eviction_policy == "lfu":
             self.eviction_strategy: EvictionStrategy = LFUStrategy()
@@ -587,6 +597,10 @@ class RadixCache(BasePrefixCache):
 
             self._record_remove_event(x)
 
+        # StreamingLLM: track total evictions for position remapping
+        if self.sink_token_count > 0:
+            self.evicted_token_count += num_evicted
+
         self.update_eviction_metrics(num_evicted, start_time)
         return EvictResult(num_tokens_evicted=num_evicted)
 
@@ -679,9 +693,12 @@ class RadixCache(BasePrefixCache):
         new_node.lock_ref = child.lock_ref
         new_node.key = child.key[:split_len]
         new_node.value = child.value[:split_len].clone()
+        # StreamingLLM: new_node keeps child's original offset, child shifts forward
+        new_node.seq_start_offset = child.seq_start_offset
         child.parent = new_node
         child.key = child.key[split_len:]
         child.value = child.value[split_len:].clone()
+        child.seq_start_offset += split_len  # StreamingLLM: adjust offset after split
         new_node.parent.children[self.get_child_key_fn(key)] = new_node
 
         # Split hash_value if it was already computed, otherwise leave as None
@@ -728,6 +745,8 @@ class RadixCache(BasePrefixCache):
             new_node.parent = node
             new_node.key = key
             new_node.value = value.clone()
+            # StreamingLLM: track position from sequence start for sink protection
+            new_node.seq_start_offset = total_prefix_length
             node.children[child_key] = new_node
             self.evictable_size_ += len(key)
             self._update_leaf_status(node)

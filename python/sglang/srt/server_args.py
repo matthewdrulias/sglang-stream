@@ -337,6 +337,7 @@ class ServerArgs:
     swa_full_tokens_ratio: float = 0.8
     disable_hybrid_swa_memory: bool = False
     radix_eviction_policy: str = "lru"
+    sink_token_count: int = 0  # StreamingLLM: number of sink tokens to protect from eviction
     enable_prefill_delayer: bool = False
     prefill_delayer_max_delay_passes: int = 30
     prefill_delayer_token_usage_low_watermark: Optional[float] = None
@@ -3155,6 +3156,14 @@ class ServerArgs:
             choices=RADIX_EVICTION_POLICY_CHOICES,
             default=ServerArgs.radix_eviction_policy,
             help="The eviction policy of radix trees. 'lru' stands for Least Recently Used, 'lfu' stands for Least Frequently Used.",
+        )
+        parser.add_argument(
+            "--sink-token-count",
+            type=int,
+            default=ServerArgs.sink_token_count,
+            help="Number of sink tokens to protect from eviction (StreamingLLM). "
+            "These tokens are kept permanently in KV cache for attention stability. "
+            "0 to disable. Typical values: 4 (minimal) to 2000 (with system prompt).",
         )
         parser.add_argument(
             "--enable-prefill-delayer",

@@ -640,6 +640,7 @@ class Scheduler(
                 else self.tp_cpu_group
             ),
             eviction_policy=server_args.radix_eviction_policy,
+            sink_token_count=server_args.sink_token_count,  # StreamingLLM
             enable_metrics=self.enable_metrics,
             enable_kv_cache_events=self.enable_kv_cache_events,
             enable_mamba_extra_buffer=server_args.enable_mamba_extra_buffer(),
