@@ -4,7 +4,7 @@ WORKDIR /app
 
 # Install the StreamingLLM fork
 COPY . /app/sglang-streamingllm
-RUN pip install -e /app/sglang-streamingllm --no-deps
+RUN pip install -e /app/sglang-streamingllm/python --no-deps
 
 # Install runpod
 RUN pip install runpod
