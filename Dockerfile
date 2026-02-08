@@ -10,7 +10,7 @@ RUN pip install -e /app/sglang-streamingllm --no-deps
 RUN pip install runpod
 
 # Copy handler
-COPY handler.py /app/handler.py
+COPY src/handler.py /app/handler.py
 
 # Environment defaults
 ENV MODEL_PATH="Qwen/Qwen3-8B"
