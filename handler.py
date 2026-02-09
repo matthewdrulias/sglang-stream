@@ -24,7 +24,7 @@ def start_sglang_server():
         return True
 
     cmd = [
-        "python", "-m", "sglang.launch_server",
+        "python3", "-m", "sglang.launch_server",
         "--model-path", MODEL_PATH,
         "--tp", str(TP_SIZE),
         "--host", SGLANG_HOST,
