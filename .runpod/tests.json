@@ -1,11 +1,15 @@
 {
   "tests": [
     {
-      "name": "handler_ping",
+      "name": "chat_test",
       "input": {
-        "ping": true
+        "messages": [
+          {"role": "user", "content": "Say hello in exactly 3 words."}
+        ],
+        "max_tokens": 20,
+        "temperature": 0.1
       },
-      "timeout": 30000
+      "timeout": 300000
     }
   ],
   "config": {
