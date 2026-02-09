@@ -6,8 +6,8 @@ WORKDIR /app
 COPY . /app/sglang-streamingllm
 RUN pip install -e /app/sglang-streamingllm/python --no-deps
 
-# Install runpod and missing deps
-RUN pip install runpod pybase64
+# Install runpod and missing/updated deps
+RUN pip install runpod pybase64 --upgrade transformers
 
 # Copy handler
 COPY handler.py /app/handler.py
