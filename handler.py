@@ -3,6 +3,12 @@ import os
 import subprocess
 import time
 import requests
+import warnings
+
+# Suppress Python warnings that clutter logs
+warnings.filterwarnings("ignore", category=FutureWarning)
+warnings.filterwarnings("ignore", category=DeprecationWarning)
+os.environ["PYTHONWARNINGS"] = "ignore"
 
 # Configuration from environment
 MODEL_PATH = os.environ.get("MODEL_PATH", "Qwen/Qwen3-8B")
@@ -39,7 +45,8 @@ def start_sglang_server():
         cmd.extend(["--quantization", QUANTIZATION])
 
     print(f"Starting SGLang server: {' '.join(cmd)}")
-    subprocess.Popen(cmd)
+    # Redirect stderr to suppress warnings that RunPod logs as errors
+    subprocess.Popen(cmd, stderr=subprocess.DEVNULL)
 
     for i in range(120):
         try:
