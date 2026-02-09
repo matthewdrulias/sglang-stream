@@ -2,12 +2,12 @@ FROM lmsysorg/sglang:v0.4.5.post2-cu124
 
 WORKDIR /app
 
-# Install the StreamingLLM fork
+# Install the StreamingLLM fork (with all deps)
 COPY . /app/sglang-streamingllm
-RUN pip install -e /app/sglang-streamingllm/python --no-deps
+RUN pip install -e /app/sglang-streamingllm/python
 
-# Install runpod and missing/updated deps
-RUN pip install runpod pybase64 --upgrade transformers
+# Install runpod
+RUN pip install runpod
 
 # Copy handler
 COPY handler.py /app/handler.py
