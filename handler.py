@@ -58,6 +58,10 @@ def start_sglang_server():
 def handler(event):
     input_data = event["input"]
 
+    # Simple health check - no model needed
+    if input_data.get("ping"):
+        return {"status": "ok", "message": "Handler is running"}
+
     if not start_sglang_server():
         return {"error": "Failed to start SGLang server"}
 
